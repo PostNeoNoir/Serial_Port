@@ -35,24 +35,49 @@ MainWindow::~MainWindow()
 
 struct Message{
 
-    uint16_t preamb;
+    uint16_t preamb_5a, preamb_a5;
     uint8_t ping;
     uint32_t size;
 
     Message(void){}
 
     Message(uint8_t pings, uint32_t sizes){
-        this->preamb = 0x5aa5;
+        this->preamb_5a = 0x5a;
+        this->preamb_a5 = 0xa5;
         this->ping = pings;
         this->size = sizes;
     }
 
-    int8_t AddDIMAS(QByteArray data){
-        this->preamb = data.at(0);
-        this->ping = data.at(1);
-        this->size = data.at(2);
+    //EGOR, PLEASE CHECK THIS
+    //EGOR, PLEASE CHECK THIS
+    //EGOR, PLEASE CHECK THIS
+    //EGOR, PLEASE CHECK THIS
+    //EGOR, PLEASE CHECK THIS
+
+    //Из сырого в норм
+    int8_t toRaw(QByteArray data){
+        this->preamb_5a = data.at(0);
+        this->preamb_a5 = data.at(1);
+        this->ping = data.at(2);
+        this->size = data.at(3);
 
         return 0;
+    }
+
+
+    //Из норм в сырой
+    QByteArray fromRaw(void){
+        QByteArray data;
+        QDataStream s(&data, QIODevice::WriteOnly);
+        s.setByteOrder(QDataStream::LittleEndian);
+
+        s << this->preamb_5a;
+        s << this->preamb_a5;
+        s << this->ping;
+        s << this->size;
+
+
+        return data;
     }
 };
 
@@ -74,7 +99,7 @@ void MainWindow::slConnect(void){
 
 void MainWindow::slReadyRead(void){
 
-    if (this->serial->bytesAvailable() < 4) return;
+    if (this->serial->bytesAvailable() < 7) return;
     //qDebug() << "READY READ";
 
     QByteArray tmp_data = this->serial->readAll();
@@ -82,29 +107,50 @@ void MainWindow::slReadyRead(void){
 
     QDataStream s(&tmp_data, QIODevice::ReadOnly);
     s.setByteOrder(QDataStream::LittleEndian);
-    uint32_t value;
-    s >> value;
-
-    QString value_str_cc_10 = QString::number(value,10);
-    int value_change = value_str_cc_10.toInt();
-    QString value_str_cc_16 = QString::number( value_change, 16);
 
 
-    QString hex_value = QString("%1").arg(value, value_str_cc_16.size(), 16, QLatin1Char( '0' ));
+    //EGOR, PLEASE CHECK THIS
+    //EGOR, PLEASE CHECK THIS
+    //EGOR, PLEASE CHECK THIS
+    //EGOR, PLEASE CHECK THIS
+    //EGOR, PLEASE CHECK THIS
+    uint16_t preamb;
+    uint8_t cmd;
+    uint32_t size;
+    s >> preamb;
+    s >> cmd;
+    s >> size;
 
+    qDebug()<<"Values received from the port " << tmp_data;
 
-    if(hex_value[0] == '5' and hex_value[1] == 'a' and hex_value[2] == 'a' and hex_value[3] == '5'){
-        QChar cmd_1,cmd_2;
-        cmd_1 = hex_value[4];
-        cmd_2 = hex_value[5];
-
-        qDebug()<<"Cmd "<<cmd_1<<cmd_2;
-
-        qDebug()<<"Value "<<value;
-        qDebug() << "Value hex "<< hex << value;
-        qDebug()<<"Value String hex "<< hex_value;
-
+    if(preamb == 0x5aa5){
+        qDebug()<< "ID: "<<cmd;
     }
+
+
+// Через строку
+//    QString value_str_cc_10 = QString::number(value,10);
+//    int value_change = value_str_cc_10.toInt();
+//    QString value_str_cc_16 = QString::number( value_change, 16);
+
+//    QString hex_value = QString("%1").arg(value, value_str_cc_16.size(), 16, QLatin1Char( '0' ));
+
+
+//    if(hex_value[0] == '5' and hex_value[1] == 'a' and hex_value[2] == 'a' and hex_value[3] == '5'){
+//        QChar cmd_1,cmd_2;
+//        cmd_1 = hex_value[4];
+//        cmd_2 = hex_value[5];
+
+//        qDebug()<<"Cmd "<<cmd_1<<cmd_2;
+
+//        qDebug()<<"Value "<<value;
+//        qDebug() << "Value hex "<< hex << value;
+//        qDebug()<<"Value String hex "<< hex_value;
+
+//    }
+
+
+
 }
 
 void MainWindow::slWrite(void){
@@ -132,36 +178,6 @@ void MainWindow::slWrite(void){
 }
 
 
-
-
-/*void MainWindow::slSend(void){
-
-    if(!(this->serial)) return;
-
-    QByteArray tmp_data;
-
-    QDataStream s(&tmp_data, QIODevice::WriteOnly);
-
-    s.setByteOrder(QDataStream::LittleEndian);
-    uint16_t preamb = 0x5AA5;
-    s << preamb;
-
-    s.setByteOrder(QDataStream::LittleEndian);
-    uint8_t ping = 0x01;
-    s << ping;
-
-    s.setByteOrder(QDataStream::LittleEndian);
-    uint32_t size = 0x00000000;
-    s << size;
-
-    this->serial->write(tmp_data);
-
-}
-
-*/
-
-//отправить пакет на прогу Егора, после этого прога отправит ответ и в этом ответет должен быть айди.
-//Конструктор пакета
 
 
 
