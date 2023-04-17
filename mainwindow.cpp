@@ -50,7 +50,10 @@ void MainWindow::slConnect(void){
 }
 
 void MainWindow::slReadyRead(void){
-
+//Egor check pls
+        //Egor check pls
+            //Egor check pls
+                //Egor check pls
     if (this->serial->bytesAvailable() < Count_Wait_Byte)return;
 
     QByteArray tmp_data = this->serial->read(Count_Wait_Byte - 4);
@@ -77,11 +80,6 @@ void MainWindow::slReadyRead(void){
     }
 }
 
-//фул автомат структура без реади рида, распарсить через мессадж, ввести колво байт ожидаемых,
-
-// по пуш батоном запись в ожидание байт=колво байт которое ожидается на команлу пинг, в реди риди сравниваю буфер с тем сколько ожидаю, когда пришло нужно колво байт вычитывать размер заголовка, вычитываем какое колво байт неоюжодимо не заголовка,... проверять мессадж, если в мессадж проверка на преамбулу не прошла выводить номер ошибки
-
-
 void MainWindow::slWrite(void){
 
     //Command PING    ->    Command::PING
@@ -103,20 +101,14 @@ void MainWindow::slWrite(void){
     uint32_t size = 0x00000000;
     s << size;
 
+//Egor check pls
+        //Egor check pls
+            //Egor check pls
+                //Egor check pls
+
     Count_Wait_Byte = Size::AWAIT_PING;
 
     this->serial->write(tmp_data);
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
