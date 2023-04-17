@@ -33,54 +33,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-struct Message{
-
-    uint16_t preamb_5a, preamb_a5;
-    uint8_t ping;
-    uint32_t size;
-
-    Message(void){}
-
-    Message(uint8_t pings, uint32_t sizes){
-        this->preamb_5a = 0x5a;
-        this->preamb_a5 = 0xa5;
-        this->ping = pings;
-        this->size = sizes;
-    }
-
-    //EGOR, PLEASE CHECK THIS
-    //EGOR, PLEASE CHECK THIS
-    //EGOR, PLEASE CHECK THIS
-    //EGOR, PLEASE CHECK THIS
-    //EGOR, PLEASE CHECK THIS
-
-    //Из сырого в норм
-    int8_t toRaw(QByteArray data){
-        this->preamb_5a = data.at(0);
-        this->preamb_a5 = data.at(1);
-        this->ping = data.at(2);
-        this->size = data.at(3);
-
-        return 0;
-    }
-
-
-    //Из норм в сырой
-    QByteArray fromRaw(void){
-        QByteArray data;
-        QDataStream s(&data, QIODevice::WriteOnly);
-        s.setByteOrder(QDataStream::LittleEndian);
-
-        s << this->preamb_5a;
-        s << this->preamb_a5;
-        s << this->ping;
-        s << this->size;
-
-
-        return data;
-    }
-};
-
 void MainWindow::slConnect(void){
     if (this->serial){
         this->serial->close();
@@ -99,62 +51,40 @@ void MainWindow::slConnect(void){
 
 void MainWindow::slReadyRead(void){
 
-    if (this->serial->bytesAvailable() < 7) return;
-    //qDebug() << "READY READ";
+    if (this->serial->bytesAvailable() < Count_Wait_Byte)return;
 
-    QByteArray tmp_data = this->serial->readAll();
-    //qDebug() << "SIZE IS " << tmp_data.size();
+    QByteArray tmp_data = this->serial->read(Count_Wait_Byte - 4);
 
     QDataStream s(&tmp_data, QIODevice::ReadOnly);
     s.setByteOrder(QDataStream::LittleEndian);
 
+    Message message;
 
-    //EGOR, PLEASE CHECK THIS
-    //EGOR, PLEASE CHECK THIS
-    //EGOR, PLEASE CHECK THIS
-    //EGOR, PLEASE CHECK THIS
-    //EGOR, PLEASE CHECK THIS
-    uint16_t preamb;
-    uint8_t cmd;
-    uint32_t size;
-    s >> preamb;
-    s >> cmd;
-    s >> size;
+    switch(message.fromRaw(tmp_data)){
+        case 0:{
+            QByteArray tmp_data = this->serial->read(4);
+            message.GetId(tmp_data);
+        break;}
 
-    qDebug()<<"Values received from the port " << tmp_data;
+        case -1:{
+            qDebug()<<"Incorrect preambul ";
+        break;}
 
-    if(preamb == 0x5aa5){
-        qDebug()<< "ID: "<<cmd;
+        case -2:{
+            qDebug()<<"Incorrect command ";
+        break;}
+
     }
-
-
-// Через строку
-//    QString value_str_cc_10 = QString::number(value,10);
-//    int value_change = value_str_cc_10.toInt();
-//    QString value_str_cc_16 = QString::number( value_change, 16);
-
-//    QString hex_value = QString("%1").arg(value, value_str_cc_16.size(), 16, QLatin1Char( '0' ));
-
-
-//    if(hex_value[0] == '5' and hex_value[1] == 'a' and hex_value[2] == 'a' and hex_value[3] == '5'){
-//        QChar cmd_1,cmd_2;
-//        cmd_1 = hex_value[4];
-//        cmd_2 = hex_value[5];
-
-//        qDebug()<<"Cmd "<<cmd_1<<cmd_2;
-
-//        qDebug()<<"Value "<<value;
-//        qDebug() << "Value hex "<< hex << value;
-//        qDebug()<<"Value String hex "<< hex_value;
-
-//    }
-
-
-
 }
+
+//фул автомат структура без реади рида, распарсить через мессадж, ввести колво байт ожидаемых,
+
+// по пуш батоном запись в ожидание байт=колво байт которое ожидается на команлу пинг, в реди риди сравниваю буфер с тем сколько ожидаю, когда пришло нужно колво байт вычитывать размер заголовка, вычитываем какое колво байт неоюжодимо не заголовка,... проверять мессадж, если в мессадж проверка на преамбулу не прошла выводить номер ошибки
+
 
 void MainWindow::slWrite(void){
 
+    //Command PING    ->    Command::PING
     if(!(this->serial)) return;
 
     QByteArray tmp_data;
@@ -173,9 +103,13 @@ void MainWindow::slWrite(void){
     uint32_t size = 0x00000000;
     s << size;
 
+    Count_Wait_Byte = Size::AWAIT_PING;
+
     this->serial->write(tmp_data);
 
+
 }
+
 
 
 
