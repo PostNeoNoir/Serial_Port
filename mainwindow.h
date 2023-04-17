@@ -55,6 +55,11 @@ private:
             this->size = sizes;
         }
 
+//Egor check pls
+        //Egor check pls
+            //Egor check pls
+                //Egor check pls
+
         //Из сырого в норм
         //Command::PING
         int8_t fromRaw(QByteArray data){
@@ -92,6 +97,10 @@ private:
             return data;
         }
 
+//Egor check pls
+        //Egor check pls
+            //Egor check pls
+                //Egor check pls
         int8_t GetId(QByteArray data){
 
             QDataStream s(&data, QIODevice::ReadOnly);
