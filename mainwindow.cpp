@@ -17,8 +17,13 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    connect(ui->pushButton, &QPushButton::released, this, &MainWindow::slConnect);
-    connect(ui->Button_Write, &QPushButton::released, this, &MainWindow::slWrite);
+    connect(ui->Connect_Button, &QPushButton::released, this, &MainWindow::slConnect);
+    connect(ui->Ping_Button, &QPushButton::released, this, &MainWindow::slPing);
+    connect(ui->Jump_Button, &QPushButton::released, this, &MainWindow::slJump);
+    connect(ui->Verify_Button, &QPushButton::released, this, &MainWindow::slVerify);
+    connect(ui->Write_Button, &QPushButton::released, this, &MainWindow::slWrite);
+    connect(ui->Write_Button, &QPushButton::released, this, &MainWindow::slErase);
+    connect(ui->Write_Button, &QPushButton::released, this, &MainWindow::slRead);
 
     QList<QSerialPortInfo> avail_port;
     avail_port = QSerialPortInfo::availablePorts();
@@ -50,13 +55,10 @@ void MainWindow::slConnect(void){
 }
 
 void MainWindow::slReadyRead(void){
-//Egor check pls
-        //Egor check pls
-            //Egor check pls
-                //Egor check pls
+
     if (this->serial->bytesAvailable() < Count_Wait_Byte)return;
 
-    QByteArray tmp_data = this->serial->read(Count_Wait_Byte - 4);
+    QByteArray tmp_data = this->serial->read(Count_Wait_Byte - ID_SIZE);
 
     QDataStream s(&tmp_data, QIODevice::ReadOnly);
     s.setByteOrder(QDataStream::LittleEndian);
@@ -64,9 +66,45 @@ void MainWindow::slReadyRead(void){
     Message message;
 
     switch(message.fromRaw(tmp_data)){
-        case 0:{
-            QByteArray tmp_data = this->serial->read(4);
+
+        //case PING (case PING:)
+        case 1:{
+            QByteArray tmp_data = this->serial->read(ID_SIZE);
             message.GetId(tmp_data);
+        break;}
+
+        //case JUMP
+        case 2:{
+            QByteArray tmp_data = this->serial->read(ID_SIZE);
+        break;}
+
+        //case VERIFY
+        case 3:{
+            QByteArray tmp_data = this->serial->read(ID_SIZE + NUMBER_PROGRAMM_SIZE);
+        break;}
+
+        //case WRITE
+        case 4:{
+            QByteArray tmp_data = this->serial->read(ID_SIZE);
+            //message.Get_Checksum_Value();       message.GetId(tmp_data);
+
+        break;}
+
+        //case ERASE
+        case 5:{
+            QByteArray tmp_data = this->serial->read(ID_SIZE);
+            message.GetId(tmp_data);
+        break;}
+
+        //case READ
+        case 6:{
+            QByteArray tmp_data = this->serial->read(ID_SIZE + NUMBER_PROGRAMM_SIZE + 512/4);
+            message.GetId(tmp_data);
+        break;}
+
+//ERROR BLOCK
+        case 0:{
+            qDebug()<<"Command not found ";
         break;}
 
         case -1:{
@@ -74,41 +112,87 @@ void MainWindow::slReadyRead(void){
         break;}
 
         case -2:{
-            qDebug()<<"Incorrect command ";
+            qDebug()<<"Incorrect size ";
         break;}
 
     }
 }
 
-void MainWindow::slWrite(void){
-
-    //Command PING    ->    Command::PING
-    if(!(this->serial)) return;
+//BUTTON PRESS PROCESSING
+void MainWindow::slPing(void){
 
     QByteArray tmp_data;
 
-    QDataStream s(&tmp_data, QIODevice::WriteOnly);
+    if(!(this->serial)) return;
 
-    s.setByteOrder(QDataStream::LittleEndian);
-    uint16_t preamb = 0x5AA5;
-    s << preamb;
+    Count_Wait_Byte = Size::AWAIT_PING_SIZE;
 
-    s.setByteOrder(QDataStream::LittleEndian);
-    uint8_t ping = 0x01;
-    s << ping;
-
-    s.setByteOrder(QDataStream::LittleEndian);
-    uint32_t size = 0x00000000;
-    s << size;
-
-//Egor check pls
-        //Egor check pls
-            //Egor check pls
-                //Egor check pls
-
-    Count_Wait_Byte = Size::AWAIT_PING;
+    tmp_data = Message(PING, DEFAULT_COMMAND_REQUEST_SIZE).toRaw();
 
     this->serial->write(tmp_data);
+}
 
+void MainWindow::slJump(void){
 
+    QByteArray tmp_data;
+
+    if(!(this->serial)) return;
+
+    Count_Wait_Byte = Size::AWAIT_JUMP_SIZE;
+
+    tmp_data = Message(JUMP, DEFAULT_COMMAND_REQUEST_SIZE, 0x00000001).toRaw();
+
+    this->serial->write(tmp_data);
+}
+
+void MainWindow::slVerify(void){
+
+    QByteArray tmp_data;
+
+    if(!(this->serial)) return;
+
+    Count_Wait_Byte = Size::AWAIT_VERIFY_SIZE;
+
+    tmp_data = Message(VERIFY, DEFAULT_COMMAND_REQUEST_SIZE, 0x00000001).toRaw();
+
+    this->serial->write(tmp_data);
+}
+
+void MainWindow::slWrite(void){
+
+    QByteArray tmp_data;
+
+    if(!(this->serial)) return;
+
+    Count_Wait_Byte = Size::AWAIT_WRITE_SIZE;
+
+    //tmp_data = Message(WRITE, 1+0, 0x00000001, 0, array?????).toRaw();
+
+    this->serial->write(tmp_data);
+}
+
+void MainWindow::slErase(void){
+
+    QByteArray tmp_data;
+
+    if(!(this->serial)) return;
+
+    Count_Wait_Byte = Size::AWAIT_ERASE_SIZE;
+
+    tmp_data = Message(ERASE, DEFAULT_COMMAND_REQUEST_SIZE, 0x00000001).toRaw();
+
+    this->serial->write(tmp_data);
+}
+
+void MainWindow::slRead(void){
+
+    QByteArray tmp_data;
+
+    if(!(this->serial)) return;
+
+    Count_Wait_Byte = Size::AWAIT_READ_SIZE;
+
+    tmp_data = Message(READ, DEFAULT_COMMAND_REQUEST_SIZE, 0x00000001).toRaw();
+
+    this->serial->write(tmp_data);
 }

@@ -20,7 +20,13 @@ public:
 public slots:
     void slConnect(void);
     void slReadyRead(void);
+    void slPing(void);
+    void slJump(void);
+    void slErase(void);
     void slWrite(void);
+    void slVerify(void);
+    void slRead(void);
+
 
 private:
     Ui::MainWindow *ui;
@@ -28,11 +34,24 @@ private:
     uint32_t Count_Wait_Byte;//how many bytes we expect from a particular command
 
     enum Command{
-        PING = 0x01
+        PING = 0x01,
+        JUMP = 0x02,
+        VERIFY = 0x03,
+        WRITE = 0x04,
+        ERASE = 0x05,
+        READ = 0x06
     };
 
     enum Size{
-        AWAIT_PING = 11
+        AWAIT_PING_SIZE = 11,
+        AWAIT_VERIFY_SIZE = 11,
+        AWAIT_JUMP_SIZE = 7,
+        AWAIT_READ_SIZE = 11,
+        AWAIT_WRITE_SIZE = 7,
+        AWAIT_ERASE_SIZE = 7,
+        ID_SIZE = 4,
+        NUMBER_PROGRAMM_SIZE = 4,
+        DEFAULT_COMMAND_REQUEST_SIZE = 0x00000001
     };
 
     struct Message{
@@ -40,11 +59,18 @@ private:
         uint16_t preamb;
         uint8_t cmd;
         uint32_t size;
+        uint32_t number_programm;
+
+        //RENAME id to Programm Number?
+        //RENAME id to Programm Number?
+        //RENAME id to Programm Number?
+        //RENAME id to Programm Number?
+        //RENAME id to Programm Number?
         uint8_t id[4];
         QString id_str;
 
         Message(void){
-            this->preamb = 0x5AA5;//swap 5aa5 to a55a
+            this->preamb = 0x5AA5;
             this->cmd = 0x00;
             this->size = 0x00;
         }
@@ -55,13 +81,22 @@ private:
             this->size = sizes;
         }
 
-//Egor check pls
-        //Egor check pls
-            //Egor check pls
-                //Egor check pls
+        Message(uint8_t cmds, uint32_t sizes, uint32_t number_programms){
+            this->preamb = 0x5AA5;
+            this->cmd = cmds;
+            this->size = sizes;
+            this->number_programm = number_programms;
+        }
 
-        //Из сырого в норм
-        //Command::PING
+//        Message(uint8_t cmds, uint32_t sizes, uint32_t number_programms, uint8_t array????){
+//            this->preamb = 0x5AA5;
+//            this->cmd = cmds;
+//            this->size = sizes;
+//            this->number_programm = number_programms;
+//            this->add array etc.
+//        }
+
+        //From raw to normal
         int8_t fromRaw(QByteArray data){
 
             QDataStream s(&data, QIODevice::ReadOnly);
@@ -75,16 +110,51 @@ private:
                 return -1;
             }
 
-            if(cmd != 1){
-                return -2;
+            //Command::PING
+            if(cmd == PING){
+                if(size == 0x00000000)return 1;//return PING;
+                else return -2;
+            }
+
+            //Command::JUMP
+            if(cmd == JUMP){
+                if(size == 0x00000000)return 2;
+                else return -2;
+            }
+
+            //Command::VERIFY
+            if(cmd == VERIFY){
+                if(size == 0x00000002)return 3;
+                else return -2;
+
+            }
+
+            //Command::WRITE
+            if(cmd == WRITE){
+                //колво байт пакета???
+                //if(size == DEFAULT_COMMAND_SIZE + (*.bin/4))return 4;
+                return 4;
+                //else return -2;
+            }
+
+            //Command::ERASE
+            if(cmd == ERASE){
+                if(size == 0x00000000)return 5;
+                else return -2;
+            }
+
+            //Command::READ
+            if(cmd == READ){
+                //if(size == 1 + 512/4)return 6;
+                //else return -2;
             }
 
             return 0;
         }
 
 
-        //Из норм в сырой
-        QByteArray toRaw(void){
+        //From normal to raw
+        QByteArray toRaw(){
 
             QByteArray data;
             QDataStream s(&data, QIODevice::WriteOnly);
@@ -97,10 +167,11 @@ private:
             return data;
         }
 
-//Egor check pls
-        //Egor check pls
-            //Egor check pls
-                //Egor check pls
+                //RENAME id to Programm Number?
+                //RENAME id to Programm Number?
+                //RENAME id to Programm Number?
+                //RENAME id to Programm Number?
+                //RENAME id to Programm Number?
         int8_t GetId(QByteArray data){
 
             QDataStream s(&data, QIODevice::ReadOnly);
@@ -116,10 +187,28 @@ private:
             id_str.push_back(id[2]);
             id_str.push_back(id[3]);
 
-            qDebug()<<"ID is "<<id_str;
+            qDebug()<<"Id is "<<id_str;
 
             return 0;
         }
+
+//        int8_t Get_Checksum_Value(QByteArray data){
+
+//            QDataStream s(&data, QIODevice::ReadOnly);
+//            s.setByteOrder(QDataStream::LittleEndian);
+
+//            for(int i=0;i<128;i++){
+//                s >> this->checksum_value[i];
+//            }
+
+//            for(int i=0;i<128;i++){
+//                checksum_value_str.push_back(id[i]);
+//            }
+
+//            qDebug()<<"Checksum value is "<<checksum_value_str;
+
+//            return 0;
+//        }
     };
 
     QSerialPort * serial = nullptr;

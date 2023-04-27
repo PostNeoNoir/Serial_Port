@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>485</width>
-    <height>223</height>
+    <width>733</width>
+    <height>438</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,16 +19,51 @@
      <widget class="QComboBox" name="comboBox"/>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="Connect_Button">
       <property name="text">
        <string>Connect</string>
       </property>
      </widget>
     </item>
     <item>
-     <widget class="QPushButton" name="Button_Write">
+     <widget class="QPushButton" name="Ping_Button">
       <property name="text">
-       <string>PushButton</string>
+       <string>PING</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="Jump_Button">
+      <property name="text">
+       <string>JUMP</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="Verify_Button">
+      <property name="text">
+       <string>VERIFY</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="Write_Button">
+      <property name="text">
+       <string>WRITE</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="Erase_Button">
+      <property name="text">
+       <string>ERASE</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="Read_Button">
+      <property name="text">
+       <string>READ</string>
       </property>
      </widget>
     </item>
@@ -39,7 +74,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>485</width>
+     <width>733</width>
      <height>25</height>
     </rect>
    </property>
