@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QSerialPort>
 #include <QDebug>
+#include <QFile>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -32,6 +33,13 @@ private:
     Ui::MainWindow *ui;
 
     uint32_t Count_Wait_Byte;//how many bytes we expect from a particular command
+    uint8_t Flashing_Flag = 0;
+
+    enum FlashMapping{
+            FLASH_MAP_APP_1 = 40960,
+            FLASH_MAP_APP_2 = 32768,
+            FLASH_MAP_APP_USER = 40960
+        };
 
     enum Command{
         PING = 0x01,
@@ -51,7 +59,8 @@ private:
         AWAIT_ERASE_SIZE = 7,
         ID_SIZE = 4,
         NUMBER_PROGRAMM_SIZE = 4,
-        DEFAULT_COMMAND_REQUEST_SIZE = 0x00000001
+        DEFAULT_COMMAND_REQUEST_SIZE = 0x00000001,
+        CHUNK_SIZE_WORDS = 128
     };
 
     struct Message{
@@ -60,14 +69,15 @@ private:
         uint8_t cmd;
         uint32_t size;
         uint32_t number_programm;
+        QVector<uint32_t>   payload;
 
         //RENAME id to Programm Number?
         //RENAME id to Programm Number?
         //RENAME id to Programm Number?
         //RENAME id to Programm Number?
         //RENAME id to Programm Number?
-        uint8_t id[4];
-        QString id_str;
+        uint8_t progam_number[4];
+        QString progam_number_str;
 
         Message(void){
             this->preamb = 0x5AA5;
@@ -76,7 +86,7 @@ private:
         }
 
         Message(uint8_t cmds, uint32_t sizes){
-            this->preamb = 0x5AA5;
+            this->preamb = 0xA55A;
             this->cmd = cmds;
             this->size = sizes;
         }
@@ -88,14 +98,6 @@ private:
             this->number_programm = number_programms;
         }
 
-//        Message(uint8_t cmds, uint32_t sizes, uint32_t number_programms, uint8_t array????){
-//            this->preamb = 0x5AA5;
-//            this->cmd = cmds;
-//            this->size = sizes;
-//            this->number_programm = number_programms;
-//            this->add array etc.
-//        }
-
         //From raw to normal
         int8_t fromRaw(QByteArray data){
 
@@ -105,6 +107,9 @@ private:
             s >> this->preamb;
             s >> this->cmd;
             s >> this->size;
+            for (uint32_t i = 0; i < this->number_programm; i++){
+                this->payload.append(*reinterpret_cast<uint32_t *>(data.data() + 7 + i * 4));
+            }
 
             if((preamb != 0x5AA5)){
                 return -1;
@@ -129,23 +134,23 @@ private:
 
             }
 
-            //Command::WRITE
-            if(cmd == WRITE){
-                //колво байт пакета???
-                //if(size == DEFAULT_COMMAND_SIZE + (*.bin/4))return 4;
-                return 4;
-                //else return -2;
-            }
-
             //Command::ERASE
             if(cmd == ERASE){
                 if(size == 0x00000000)return 5;
                 else return -2;
+
             }
+
+            //Command::WRITE
+            if(cmd == WRITE){
+                if(size == 0x00000000)return 4;
+                else return -2;
+            }
+
 
             //Command::READ
             if(cmd == READ){
-                //if(size == 1 + 512/4)return 6;
+                //if(size == 1 + PacketSize)return 6;
                 //else return -2;
             }
 
@@ -163,52 +168,32 @@ private:
             s << this->preamb;
             s << this->cmd;
             s << this->size;
+            for (uint32_t i = 0; i < this->number_programm; i++){
+                s << this->payload[i];
+            }
 
             return data;
         }
 
-                //RENAME id to Programm Number?
-                //RENAME id to Programm Number?
-                //RENAME id to Programm Number?
-                //RENAME id to Programm Number?
-                //RENAME id to Programm Number?
-        int8_t GetId(QByteArray data){
+        int8_t Get_Program_ID(QByteArray data){
 
             QDataStream s(&data, QIODevice::ReadOnly);
             s.setByteOrder(QDataStream::LittleEndian);
 
-            s >> this->id[0];
-            s >> this->id[1];
-            s >> this->id[2];
-            s >> this->id[3];
+            s >> this->progam_number[0];
+            s >> this->progam_number[1];
+            s >> this->progam_number[2];
+            s >> this->progam_number[3];
 
-            id_str.push_back(id[0]);
-            id_str.push_back(id[1]);
-            id_str.push_back(id[2]);
-            id_str.push_back(id[3]);
+            progam_number_str.push_back(progam_number[0]);
+            progam_number_str.push_back(progam_number[1]);
+            progam_number_str.push_back(progam_number[2]);
+            progam_number_str.push_back(progam_number[3]);
 
-            qDebug()<<"Id is "<<id_str;
+            qDebug()<<"Progam number is "<<progam_number_str;
 
             return 0;
         }
-
-//        int8_t Get_Checksum_Value(QByteArray data){
-
-//            QDataStream s(&data, QIODevice::ReadOnly);
-//            s.setByteOrder(QDataStream::LittleEndian);
-
-//            for(int i=0;i<128;i++){
-//                s >> this->checksum_value[i];
-//            }
-
-//            for(int i=0;i<128;i++){
-//                checksum_value_str.push_back(id[i]);
-//            }
-
-//            qDebug()<<"Checksum value is "<<checksum_value_str;
-
-//            return 0;
-//        }
     };
 
     QSerialPort * serial = nullptr;

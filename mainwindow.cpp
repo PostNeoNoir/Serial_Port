@@ -7,9 +7,10 @@
 #include <QByteArray>
 #include <QDataStream>
 #include <QString>
-
 #include <QPair>
 #include <QIODevice>
+#include <QFile>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -70,7 +71,7 @@ void MainWindow::slReadyRead(void){
         //case PING (case PING:)
         case 1:{
             QByteArray tmp_data = this->serial->read(ID_SIZE);
-            message.GetId(tmp_data);
+            message.Get_Program_ID(tmp_data);
         break;}
 
         //case JUMP
@@ -83,23 +84,53 @@ void MainWindow::slReadyRead(void){
             QByteArray tmp_data = this->serial->read(ID_SIZE + NUMBER_PROGRAMM_SIZE);
         break;}
 
-        //case WRITE
-        case 4:{
-            QByteArray tmp_data = this->serial->read(ID_SIZE);
-            //message.Get_Checksum_Value();       message.GetId(tmp_data);
-
-        break;}
-
         //case ERASE
         case 5:{
-            QByteArray tmp_data = this->serial->read(ID_SIZE);
-            message.GetId(tmp_data);
+            if (!(this->Flashing_Flag)){
+                       break;
+            }
+            else{
+                this->Flashing_Flag = 0;
+                QFile file("C:/QtProject/Serial_Port_Egor/file.txt");
+                file.open(QFile::ReadOnly);
+            }
+
+            [[fallthrough]];
+              }
+
+        //case WRITE
+        case 4:{
+            char chunk[CHUNK_SIZE_WORDS*4];
+            //fix file ->
+            uint32_t chunk_size = file.read(chunk, CHUNK_SIZE_WORDS*4);
+
+            if(chunk_size){
+                Message(WRITE, 3 + chunk_size/4);
+
+                //payload
+
+                for (uint32_t iter = 0; iter < chunk_size; iter += 4){
+                    //payload
+                    //Message.payload.append(*((uint32_t *)(chunk + iter)));
+                }
+                Count_Wait_Byte = Size::AWAIT_WRITE_SIZE;
+
+                tmp_data = Message(WRITE, DEFAULT_COMMAND_REQUEST_SIZE + chunk_size/4, 0x00000001).toRaw();//+firm content
+                this->serial->write(tmp_data);
+
+            }
+            else{
+                //fix file ->
+                file.close();
+                file.remove();
+            }
+
         break;}
 
         //case READ
         case 6:{
-            QByteArray tmp_data = this->serial->read(ID_SIZE + NUMBER_PROGRAMM_SIZE + 512/4);
-            message.GetId(tmp_data);
+            //QByteArray tmp_data = this->serial->read(ID_SIZE + NUMBER_PROGRAMM_SIZE + 512/4);
+            //message.Get_Program_ID(tmp_data);
         break;}
 
 //ERROR BLOCK
@@ -160,15 +191,28 @@ void MainWindow::slVerify(void){
 
 void MainWindow::slWrite(void){
 
-    QByteArray tmp_data;
+    QFile file("C:/QtProject/Serial_Port_Egor/file.txt");
 
-    if(!(this->serial)) return;
+    if(!(file.open(QFile::ReadOnly))){
+        file.remove();
+        return;
+    }
 
-    Count_Wait_Byte = Size::AWAIT_WRITE_SIZE;
+    if((file.size() > FLASH_MAP_APP_1) || (file.size() > FLASH_MAP_APP_2) || (file.size() > FLASH_MAP_APP_USER)){
+        qDebug()<<"Size Error";
+        file.close();
+        file.remove();
+        return;
 
-    //tmp_data = Message(WRITE, 1+0, 0x00000001, 0, array?????).toRaw();
+    }
 
-    this->serial->write(tmp_data);
+    file.close();
+    file.remove();
+
+    Flashing_Flag = 1;
+
+    slErase();
+
 }
 
 void MainWindow::slErase(void){
@@ -180,6 +224,8 @@ void MainWindow::slErase(void){
     Count_Wait_Byte = Size::AWAIT_ERASE_SIZE;
 
     tmp_data = Message(ERASE, DEFAULT_COMMAND_REQUEST_SIZE, 0x00000001).toRaw();
+
+    //Message.payload.append();
 
     this->serial->write(tmp_data);
 }
