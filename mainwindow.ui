@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>733</width>
-    <height>438</height>
+    <width>744</width>
+    <height>476</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,56 +16,83 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QComboBox" name="comboBox"/>
+     <layout class="QHBoxLayout" name="Choose_Layout">
+      <item>
+       <widget class="QLineEdit" name="lineEdit"/>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBox"/>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBox_App"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="BrowseFile_Button">
+        <property name="text">
+         <string>...</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item>
-     <widget class="QPushButton" name="Connect_Button">
-      <property name="text">
-       <string>Connect</string>
+     <layout class="QHBoxLayout" name="Button_Layout" stretch="0,0,0,0,0,0,0">
+      <property name="spacing">
+       <number>7</number>
       </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="Ping_Button">
-      <property name="text">
-       <string>PING</string>
+      <property name="sizeConstraint">
+       <enum>QLayout::SetDefaultConstraint</enum>
       </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="Jump_Button">
-      <property name="text">
-       <string>JUMP</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="Verify_Button">
-      <property name="text">
-       <string>VERIFY</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="Write_Button">
-      <property name="text">
-       <string>WRITE</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="Erase_Button">
-      <property name="text">
-       <string>ERASE</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="Read_Button">
-      <property name="text">
-       <string>READ</string>
-      </property>
-     </widget>
+      <item>
+       <widget class="QPushButton" name="Connect_Button">
+        <property name="text">
+         <string>Connect</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="Ping_Button">
+        <property name="text">
+         <string>PING</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="Jump_Button">
+        <property name="text">
+         <string>JUMP</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="Verify_Button">
+        <property name="text">
+         <string>VERIFY</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="Write_Button">
+        <property name="text">
+         <string>WRITE</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="Erase_Button">
+        <property name="text">
+         <string>ERASE</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="Read_Button">
+        <property name="text">
+         <string>READ</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
@@ -74,7 +101,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>733</width>
+     <width>744</width>
      <height>25</height>
     </rect>
    </property>

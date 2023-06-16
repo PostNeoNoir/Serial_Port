@@ -27,6 +27,7 @@ public slots:
     void slWrite(void);
     void slVerify(void);
     void slRead(void);
+    void BrowseFile(void);
 
 
 private:
@@ -34,6 +35,7 @@ private:
 
     uint32_t Count_Wait_Byte;//how many bytes we expect from a particular command
     uint8_t Flashing_Flag = 0;
+    QFile *file = nullptr;
 
     enum FlashMapping{
             FLASH_MAP_APP_1 = 40960,
@@ -43,24 +45,25 @@ private:
 
     enum Command{
         PING = 0x01,
-        JUMP = 0x02,
-        VERIFY = 0x03,
-        WRITE = 0x04,
-        ERASE = 0x05,
-        READ = 0x06
+        JUMP = 0x02,  // for egors programm 0x03
+        VERIFY = 0x03, // for egors programm not use
+        WRITE = 0x04, // for egors programm 0x04
+        ERASE = 0x05, // for egors 5rogramm 0x05
+        READ = 0x06 // for egors programm 0x06
     };
 
     enum Size{
         AWAIT_PING_SIZE = 11,
-        AWAIT_VERIFY_SIZE = 11,
+        AWAIT_VERIFY_SIZE = 15,
         AWAIT_JUMP_SIZE = 7,
         AWAIT_READ_SIZE = 11,
-        AWAIT_WRITE_SIZE = 7,
+        AWAIT_WRITE_SIZE = 11,
         AWAIT_ERASE_SIZE = 7,
-        ID_SIZE = 4,
         NUMBER_PROGRAMM_SIZE = 4,
+        NUMBER_ID_SIZE = 4,
+        CHECKSUM_VALUE = 4,
         DEFAULT_COMMAND_REQUEST_SIZE = 0x00000001,
-        CHUNK_SIZE_WORDS = 128
+        PACKET_FIRMWARE_SIZE_WORDS = 4
     };
 
     struct Message{
@@ -70,12 +73,6 @@ private:
         uint32_t size;
         uint32_t number_programm;
         QVector<uint32_t>   payload;
-
-        //RENAME id to Programm Number?
-        //RENAME id to Programm Number?
-        //RENAME id to Programm Number?
-        //RENAME id to Programm Number?
-        //RENAME id to Programm Number?
         uint8_t progam_number[4];
         QString progam_number_str;
 
@@ -86,7 +83,7 @@ private:
         }
 
         Message(uint8_t cmds, uint32_t sizes){
-            this->preamb = 0xA55A;
+            this->preamb = 0x5AA5;
             this->cmd = cmds;
             this->size = sizes;
         }
@@ -95,8 +92,16 @@ private:
             this->preamb = 0x5AA5;
             this->cmd = cmds;
             this->size = sizes;
-            this->number_programm = number_programms;
+            //this->number_programm = number_programms;
+            this->payload.push_back(number_programms);
         }
+
+        Message(uint8_t cmds){
+            this->preamb = 0x5AA5;
+            this->cmd = cmds;
+        }
+
+
 
         //From raw to normal
         int8_t fromRaw(QByteArray data){
@@ -107,8 +112,10 @@ private:
             s >> this->preamb;
             s >> this->cmd;
             s >> this->size;
-            for (uint32_t i = 0; i < this->number_programm; i++){
-                this->payload.append(*reinterpret_cast<uint32_t *>(data.data() + 7 + i * 4));
+            uint32_t keep;
+            for (uint32_t i = 0; i < this->size; i++){
+                s >> keep;
+                this->payload.push_back(keep);
             }
 
             if((preamb != 0x5AA5)){
@@ -117,7 +124,7 @@ private:
 
             //Command::PING
             if(cmd == PING){
-                if(size == 0x00000000)return 1;//return PING;
+                if(size == 0x00000001)return 1;
                 else return -2;
             }
 
@@ -168,8 +175,12 @@ private:
             s << this->preamb;
             s << this->cmd;
             s << this->size;
-            for (uint32_t i = 0; i < this->number_programm; i++){
-                s << this->payload[i];
+            uint32_t keep;
+
+            foreach(auto bar, this->payload){
+                keep = bar;
+                s << keep;
+                qDebug()<<"Payload "<<hex<<keep;
             }
 
             return data;
@@ -190,7 +201,7 @@ private:
             progam_number_str.push_back(progam_number[2]);
             progam_number_str.push_back(progam_number[3]);
 
-            qDebug()<<"Progam number is "<<progam_number_str;
+            qDebug()<<"Progam ID is "<<progam_number_str;
 
             return 0;
         }
