@@ -92,7 +92,6 @@ private:
             this->preamb = 0x5AA5;
             this->cmd = cmds;
             this->size = sizes;
-            //this->number_programm = number_programms;
             this->payload.push_back(number_programms);
         }
 
@@ -157,8 +156,7 @@ private:
 
             //Command::READ
             if(cmd == READ){
-                //if(size == 1 + PacketSize)return 6;
-                //else return -2;
+                return 6;
             }
 
             return 0;
@@ -180,7 +178,7 @@ private:
             foreach(auto bar, this->payload){
                 keep = bar;
                 s << keep;
-                qDebug()<<"Payload "<<hex<<keep;
+                //qDebug()<<"Payload "<<hex<<keep;
             }
 
             return data;
@@ -201,7 +199,7 @@ private:
             progam_number_str.push_back(progam_number[2]);
             progam_number_str.push_back(progam_number[3]);
 
-            qDebug()<<"Progam ID is "<<progam_number_str;
+            qDebug()<<"Progam ID is "<<hex<<progam_number_str;
 
             return 0;
         }
